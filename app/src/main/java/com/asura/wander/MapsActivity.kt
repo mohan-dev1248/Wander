@@ -1,11 +1,15 @@
 package com.asura.wander
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.content.res.Resources
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -16,6 +20,7 @@ import java.util.*
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
+    private val REQUEST_LOCATION_PERMISSION: Int = 0
     private lateinit var mMap: GoogleMap
     private val tag = "MapsActivity"
 
@@ -71,6 +76,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         setMapLongClick(mMap)
         setPoiClick(mMap)
+        enableMyLocation()
     }
 
     private fun setMapLongClick(map: GoogleMap){
@@ -106,6 +112,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    private fun enableMyLocation(){
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+            == PackageManager.PERMISSION_GRANTED) {
+            mMap.isMyLocationEnabled = true
+        } else {
+            ActivityCompat.requestPermissions(this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                REQUEST_LOCATION_PERMISSION)
+        }
+    }
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.map_options,menu)
         return true
@@ -122,5 +140,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        when(requestCode){
+            REQUEST_LOCATION_PERMISSION -> {
+                if (grantResults.isNotEmpty()
+                    && grantResults[0]
+                    == PackageManager.PERMISSION_GRANTED) {
+                    mMap.isMyLocationEnabled = true
+                }
+            }
+        }
     }
 }
