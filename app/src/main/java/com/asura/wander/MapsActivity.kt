@@ -10,11 +10,8 @@ import android.view.Menu
 import android.view.MenuItem
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.android.gms.maps.*
 
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import java.util.*
 
@@ -28,8 +25,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        val mapFragment = supportFragmentManager
-            .findFragmentById(R.id.map) as SupportMapFragment
+        val mapFragment = SupportMapFragment.newInstance()
+        supportFragmentManager.beginTransaction().add(R.id.map_container,mapFragment).commit()
         mapFragment.getMapAsync(this)
     }
 
@@ -77,6 +74,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         setMapLongClick(mMap)
         setPoiClick(mMap)
         enableMyLocation()
+        setInfoWindowClickToParanoma()
     }
 
     private fun setMapLongClick(map: GoogleMap){
@@ -108,6 +106,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     .position(it.latLng)
                     .snippet(snippet)
             )
+            poiMarker.tag = "poi"
             poiMarker.showInfoWindow()
         }
     }
@@ -121,6 +120,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             ActivityCompat.requestPermissions(this,
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                 REQUEST_LOCATION_PERMISSION)
+        }
+    }
+
+    private fun setInfoWindowClickToParanoma(){
+        mMap.setOnInfoWindowClickListener {
+            if(it.tag == "poi"){
+                val  options = StreetViewPanoramaOptions().position(it.position)
+                val fragment = SupportStreetViewPanoramaFragment.newInstance(options)
+                supportFragmentManager.beginTransaction().
+                    replace(R.id.map_container,fragment).addToBackStack(null).commit()
+            }
         }
     }
 
