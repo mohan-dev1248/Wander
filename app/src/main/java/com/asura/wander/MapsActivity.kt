@@ -11,6 +11,7 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import java.util.*
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -38,11 +39,47 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap = googleMap
 
         // Add a marker in Sydney and move the camera
-        val geekSkool = LatLng(12.961850, 77.644145)
-        mMap.addMarker(MarkerOptions().position(geekSkool).title("Marker in Sydney"))
+        val geekSkool = LatLng(12.961561, 77.644157)
+        mMap.addMarker(MarkerOptions().position(geekSkool).title("GeekSkool"))
         val zoomLevel = 15F
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(geekSkool, zoomLevel))
 
+
+        setMapLongClick(mMap)
+        setPoiClick(mMap)
+    }
+
+    private fun setMapLongClick(map: GoogleMap){
+        map.setOnMapLongClickListener {
+            val snippet = String.format(
+                Locale.getDefault(),
+                "Lat: %1$.5f, Long: %2$.5f",
+                it.latitude,
+                it.longitude
+            )
+            map.addMarker(MarkerOptions()
+                .position(it)
+                .title(getString(R.string.dropped_pin))
+                .snippet(snippet))
+        }
+    }
+
+    private fun setPoiClick(map: GoogleMap){
+        map.setOnPoiClickListener {
+            val snippet = String.format(
+                Locale.getDefault(),
+                "Lat: %1$.5f, Long: %2$.5f",
+                it.latLng.latitude,
+                it.latLng.longitude
+            )
+            val poiMarker = map.addMarker(
+                MarkerOptions()
+                    .title(it.name)
+                    .position(it.latLng)
+                    .snippet(snippet)
+            )
+            poiMarker.showInfoWindow()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
