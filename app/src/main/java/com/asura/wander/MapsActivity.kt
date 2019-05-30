@@ -1,7 +1,9 @@
 package com.asura.wander
 
+import android.content.res.Resources
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 
@@ -9,13 +11,13 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 import java.util.*
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
+    private val tag = "MapsActivity"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,12 +40,34 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
+        try{
+            val success = mMap.setMapStyle(
+                MapStyleOptions.loadRawResourceStyle(
+                    this, R.raw.map_style
+                )
+            )
+            if(!success){
+                Log.e(tag,"Styling Map Failed")
+            }
+        }catch (e : Resources.NotFoundException){
+            Log.e(tag,"Can't find the style")
+        }
         // Add a marker in Sydney and move the camera
         val geekSkool = LatLng(12.961561, 77.644157)
-        mMap.addMarker(MarkerOptions().position(geekSkool).title("GeekSkool"))
+        mMap.addMarker(
+            MarkerOptions().
+                position(geekSkool).
+                title("GeekSkool").
+                icon(BitmapDescriptorFactory.defaultMarker(
+                    BitmapDescriptorFactory.HUE_AZURE))
+        )
         val zoomLevel = 15F
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(geekSkool, zoomLevel))
 
+//        val groundOverlay:GroundOverlayOptions = GroundOverlayOptions().
+//            image(BitmapDescriptorFactory.fromResource(R.drawable.android)).
+//            position(geekSkool,100F)
+//        mMap.addGroundOverlay(groundOverlay)
 
         setMapLongClick(mMap)
         setPoiClick(mMap)
