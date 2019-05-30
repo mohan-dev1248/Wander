@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.*
@@ -26,7 +27,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         setContentView(R.layout.activity_maps)
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = SupportMapFragment.newInstance()
-        supportFragmentManager.beginTransaction().add(R.id.map_container,mapFragment).commit()
+        supportFragmentManager.beginTransaction().add(R.id.map_container, mapFragment).commit()
         mapFragment.getMapAsync(this)
     }
 
@@ -42,26 +43,26 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        try{
+        try {
             val success = mMap.setMapStyle(
                 MapStyleOptions.loadRawResourceStyle(
                     this, R.raw.map_style
                 )
             )
-            if(!success){
-                Log.e(tag,"Styling Map Failed")
+            if (!success) {
+                Log.e(tag, "Styling Map Failed")
             }
-        }catch (e : Resources.NotFoundException){
-            Log.e(tag,"Can't find the style")
+        } catch (e: Resources.NotFoundException) {
+            Log.e(tag, "Can't find the style")
         }
         // Add a marker in Sydney and move the camera
         val geekSkool = LatLng(12.961561, 77.644157)
         mMap.addMarker(
-            MarkerOptions().
-                position(geekSkool).
-                title("GeekSkool").
-                icon(BitmapDescriptorFactory.defaultMarker(
-                    BitmapDescriptorFactory.HUE_AZURE))
+            MarkerOptions().position(geekSkool).title("GeekSkool").icon(
+                BitmapDescriptorFactory.defaultMarker(
+                    BitmapDescriptorFactory.HUE_AZURE
+                )
+            )
         )
         val zoomLevel = 15F
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(geekSkool, zoomLevel))
@@ -74,10 +75,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         setMapLongClick(mMap)
         setPoiClick(mMap)
         enableMyLocation()
-        setInfoWindowClickToParanoma()
+        setInfoWindowClickToPanorama()
     }
 
-    private fun setMapLongClick(map: GoogleMap){
+    private fun setMapLongClick(map: GoogleMap) {
         map.setOnMapLongClickListener {
             val snippet = String.format(
                 Locale.getDefault(),
@@ -85,14 +86,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 it.latitude,
                 it.longitude
             )
-            map.addMarker(MarkerOptions()
-                .position(it)
-                .title(getString(R.string.dropped_pin))
-                .snippet(snippet))
+            map.addMarker(
+                MarkerOptions()
+                    .position(it)
+                    .title(getString(R.string.dropped_pin))
+                    .snippet(snippet)
+            )
         }
     }
 
-    private fun setPoiClick(map: GoogleMap){
+    private fun setPoiClick(map: GoogleMap) {
         map.setOnPoiClickListener {
             val snippet = String.format(
                 Locale.getDefault(),
@@ -111,36 +114,51 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun enableMyLocation(){
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION)
-            == PackageManager.PERMISSION_GRANTED) {
+    private fun enableMyLocation() {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
+            == PackageManager.PERMISSION_GRANTED
+        ) {
             mMap.isMyLocationEnabled = true
         } else {
-            ActivityCompat.requestPermissions(this,
+            ActivityCompat.requestPermissions(
+                this,
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                REQUEST_LOCATION_PERMISSION)
+                REQUEST_LOCATION_PERMISSION
+            )
         }
     }
 
-    private fun setInfoWindowClickToParanoma(){
+    private fun setInfoWindowClickToPanorama() {
         mMap.setOnInfoWindowClickListener {
-            if(it.tag == "poi"){
-                val  options = StreetViewPanoramaOptions().position(it.position)
+            if (it.tag == "poi") {
+                val options = StreetViewPanoramaOptions().position(it.position)
                 val fragment = SupportStreetViewPanoramaFragment.newInstance(options)
-                supportFragmentManager.beginTransaction().
-                    replace(R.id.map_container,fragment).addToBackStack(null).commit()
+                fragment.getStreetViewPanoramaAsync{ panorama ->
+                    panorama.setOnStreetViewPanoramaChangeListener { viewPanoramaLocation ->
+                        if(viewPanoramaLocation?.links != null){
+                            //Location is there
+                        }else{
+                            //Toast.makeText(fragment.activity,"Street view is unavailable",Toast.LENGTH_LONG)
+                            onBackPressed()
+                        }
+                    }
+                }
+                supportFragmentManager.beginTransaction().replace(R.id.map_container, fragment).addToBackStack(null)
+                    .commit()
             }
         }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.map_options,menu)
+        menuInflater.inflate(R.menu.map_options, menu)
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-        when(item?.itemId){
+        when (item?.itemId) {
             R.id.normalMap -> mMap.mapType = GoogleMap.MAP_TYPE_NORMAL
             R.id.hybridMap -> mMap.mapType = GoogleMap.MAP_TYPE_HYBRID
             R.id.satelliteMap -> mMap.mapType = GoogleMap.MAP_TYPE_SATELLITE
@@ -153,11 +171,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        when(requestCode){
+        when (requestCode) {
             REQUEST_LOCATION_PERMISSION -> {
                 if (grantResults.isNotEmpty()
                     && grantResults[0]
-                    == PackageManager.PERMISSION_GRANTED) {
+                    == PackageManager.PERMISSION_GRANTED
+                ) {
                     mMap.isMyLocationEnabled = true
                 }
             }
